@@ -11,9 +11,13 @@ fn main() {
 
     if cfg!(feature = "wayland") {
         cfg.define("GLFW_BUILD_WAYLAND", "ON");
-        cfg.define("GLFW_BUILD_X11", "ON");
     } else {
         cfg.define("GLFW_BUILD_WAYLAND", "OFF");
+    }
+
+    if cfg!(any(target_os = "linux", target_os = "freebsd")) {
+        cfg.define("GLFW_BUILD_X11", "ON");
+    } else {
         cfg.define("GLFW_BUILD_X11", "OFF");
     }
 
