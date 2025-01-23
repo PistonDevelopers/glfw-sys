@@ -22,6 +22,9 @@ RelWithDebInfo
 GLFW.build
 GLFW.xcodeproj
 
+# RustRover clutter
+.idea
+
 # macOS clutter
 .DS_Store
 

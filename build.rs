@@ -9,15 +9,21 @@ fn main() {
         .define("GLFW_BUILD_DOCS", "OFF")
         .define("CMAKE_INSTALL_LIBDIR", "lib");
 
-    let dst = if cfg!(feature = "wayland") {
-        cfg.define("GLFW_USE_WAYLAND", "ON").build()
+    if cfg!(feature = "wayland") {
+        cfg.define("GLFW_BUILD_WAYLAND", "ON");
     } else {
-        cfg.define("GLFW_USE_WAYLAND", "OFF").build()
-    };
+        cfg.define("GLFW_BUILD_WAYLAND", "OFF");
+    }
+
+    if cfg!(any(target_os = "linux", target_os = "freebsd")) {
+        cfg.define("GLFW_BUILD_X11", "ON");
+    } else {
+        cfg.define("GLFW_BUILD_X11", "OFF");
+    }
 
     println!(
         "cargo:rustc-link-search=native={}",
-        dst.join("lib").display()
+        cfg.build().join("lib").display()
     );
     println!("cargo:rustc-link-lib=dylib=glfw3");
 }
