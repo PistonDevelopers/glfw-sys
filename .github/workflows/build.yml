@@ -2,69 +2,82 @@ name: Build
 on: [push, pull_request]
 
 jobs:
+  build:
+    name: Build
+    strategy:
+      matrix: 
+        os: [ubuntu, macos, windows]
 
-    build-linux-x11-clang:
-        name: X11 (Linux, Clang)
-        runs-on: ubuntu-latest
-        env:
-            CC: clang
-            CFLAGS: -Werror
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                submodules: recursive
-            - name: Install dependencies
-              run: |
-                  sudo apt update
-                  sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
+    runs-on: ${{ matrix.os }}-latest
 
-            - name: Tests
-              run: cargo test
+    env:
+      CARGO_TERM_VERBOSE: true # for better logs if something goes wrong
 
-    build-linux-wayland-clang:
-        name: Wayland (Linux, Clang)
-        runs-on: ubuntu-latest
-        env:
-            CC: clang
-            CFLAGS: -Werror
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                submodules: recursive
-            - name: Install dependencies
-              run: |
-                  sudo apt update
-                  sudo apt install wayland-protocols libwayland-dev libxkbcommon-dev extra-cmake-modules
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true # for glfw submodule
 
-            - name: Tests
-              run: cargo test --features wayland
+      - name: Install dependencies (Linux)
+        if: matrix.os == 'ubuntu'
+        run: |
+          sudo apt update
+          sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libwayland-dev libxkbcommon-dev
 
-    build-macos-cocoa-clang:
-        name: Cocoa (macOS, Clang)
-        runs-on: macos-latest
-        env:
-            CFLAGS: -Werror
-            MACOSX_DEPLOYMENT_TARGET: 10.8
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                submodules: recursive
+      - name: Source build with static link
+        shell: bash
+        run: cargo clean && cargo run -vv --example=version --features=src_build,static_link
+      
+      - name: Source build with shared link
+        shell: bash
+        run: cargo clean && cargo run -vv --example=version --features=src_build
 
-            - uses: dtolnay/rust-toolchain@stable
-            - name: Tests
-              run: cargo test
+      - name: Prebuilt libs with static link (Non-Linux)
+        shell: bash
+        # linux pre-built static libs are not provided, so, static linkign requires src_build.
+        if: matrix.os != 'ubuntu'
+        run: cargo clean && cargo run -vv --example=version --features=static_link
+      
+      # We delay this, because we don't want the previous steps to "accidentally" succeed
+      # by linking to system libraries (on linux).
+      - name: Install Glfw Packages (Linux)
+        if: matrix.os == 'ubuntu'
+        shell: bash
+        run: sudo apt install libglfw3-dev
 
-    build-windows-win32-vs2019:
-        name: Win32 (Windows, VS2019)
-        runs-on: windows-latest
-        env:
-            CFLAGS: /WX
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                submodules: recursive
+      - name: Prebuilt libs with shared link
+        shell: bash
+        run: cargo clean && cargo run -vv --example=version && cargo build -vv --examples
+      
+      # To check vulkan bindings.
+      - name: Prepare Vulkan SDK
+        uses: humbletim/setup-vulkan-sdk@v1.2.0
+        with:
+          vulkan-query-version: latest
+          vulkan-components: Vulkan-Headers
+          vulkan-use-cache: true
+      
+      # We don't pass --no-default-features, so, this generates bindings for 
+      # vulkan and native_gl/egl + other handles too by including system headers.
+      - name: Generate Bindings
+        shell: bash
+        run: cargo clean && cargo run -vv --example=version --features=bindgen
+      
+      # Just to make sure that the script works on all platforms.
+      - name: Check gen_bindings.sh script
+        shell: bash
+        run: |
+          # bindgen-cli binary is not available for windows for some reason
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            cargo install bindgen-cli
+          else
+            curl --proto '=https' --tlsv1.2 -LsSf https://github.com/rust-lang/rust-bindgen/releases/download/v0.71.1/bindgen-cli-installer.sh | sh
+          fi
+          
+          ./gen_bindings.sh ./bindings.rs
 
-            - uses: dtolnay/rust-toolchain@stable
-            - name: Tests
-              run: cargo test
+          # lets log any differences between what is committed and what is generated.
+          # the "|| true" part is to avoid failing the build if there's any differences 
+          diff -ub ./src/sys/pregenerated.rs ./bindings.rs || true 
 
+      

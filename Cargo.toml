@@ -1,6 +1,6 @@
 [package]
 name = "glfw-sys"
-version = "5.0.0+3.3.9"
+version = "6.0.0"
 authors = ["Camilla Berglund <elmindreda@elmindreda.org>"]
 description = "An Open Source, multi-platform library for creating windows with OpenGL contexts and receiving input and events"
 documentation = "http://www.glfw.org/documentation.html"
@@ -8,15 +8,32 @@ homepage = "http://www.glfw.org/"
 repository = "https://github.com/PistonDevelopers/glfw-sys"
 readme = "README.md"
 license = "Zlib"
+edition = "2021"
 build = "build.rs"
 links = "glfw"
 
-[lib]
-name = "glfw_sys"
-path = "lib.rs"
-
-[build-dependencies]
-cmake = "0.1"
 
 [features]
+default = ["all"]
+all = ["x11", "wayland", "native_handles", "native_gl", "native_egl", "vulkan"]
+bindgen = ["dep:bindgen"]
+# build from source, instead of using prebuilt libraries.
+src_build = ["dep:cmake"]
+static_link = [] # static link (if on linux, src_build must also be enabled)
+vulkan = []
 wayland = []
+x11 = []
+native_handles = []
+native_gl = []
+native_egl = [] 
+osmesa = [] 
+
+
+[dependencies]
+
+[build-dependencies]
+bindgen = { version = "0.71", optional = true }
+cmake = { version = "0.1", optional = true }
+
+[dev-dependencies]
+glow = {version = "0.16"}
