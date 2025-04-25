@@ -51,44 +51,52 @@ jobs:
         if: matrix.os != 'ubuntu'
         run: cargo clean && cargo run -vv --example=version --features=prebuilt_libs
             
-      # ubuntu 24.04 doesn't have glfw 3.4 yet (as of 26th April 2025)
-      # so, we must build from source for glfw binaries
-      - name: Build Glfw Static Package for Linux
-        if: matrix.os == 'ubuntu'
-        shell: bash
-        run: |
-          rm -rf glfw/build
-          cd glfw
-          cmake -S . -B build -DGLFW_LIBRARY_TYPE=STATIC -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DCMAKE_BUILD_TYPE=Debug -DGLFW_BUILD_WAYLAND=ON -DGLFW_BUILD_X11=ON
-          cmake --build build
-          sudo cmake --install build
-
-      
       - name: Install Glfw Packages (MacOs)
         if: matrix.os == 'macos'
         shell: bash
         run: brew install glfw
 
-      - name: PkgConfig build with static linking (MacOs + Linux)
-        if: matrix.os != 'windows'
+      - name: PkgConfig build with static linking (MacOs)
+        if: matrix.os == 'macos'
         shell: bash
         run: cargo clean && cargo run -vv --example=version --features=static_link
       
-      - name: Build Glfw Shared Package for Linux
-        if: matrix.os == 'ubuntu'
-        shell: bash
-        run: |
-          rm -rf glfw/build
-          cd glfw
-          cmake -S . -B build -DGLFW_LIBRARY_TYPE=SHARED -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DCMAKE_BUILD_TYPE=Debug -DGLFW_BUILD_WAYLAND=ON -DGLFW_BUILD_X11=ON
-          cmake --build build
-          sudo cmake --install build
 
-      - name: PkgConfig build with shared linking (MacOs + Linux)
-        if: matrix.os != 'windows'
+      - name: PkgConfig build with shared linking (MacOs)
+        if: matrix.os == 'macos'
         shell: bash
         run: cargo clean && cargo run -vv --example=version
       
+
+      # ubuntu 24.04 doesn't have glfw 3.4 yet (as of 26th April 2025)
+      # so, we must build from source for glfw binaries
+      # We build and store the binaries in build_shared and build_static directories
+      - name: Build Glfw Package for Linux
+        if: matrix.os == 'ubuntu'
+        shell: bash
+        run: |
+          export COMMON_OPTIONS="-DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DCMAKE_BUILD_TYPE=Debug -DGLFW_BUILD_WAYLAND=ON -DGLFW_BUILD_X11=ON"
+          cmake -S glfw -B build_shared -DGLFW_LIBRARY_TYPE=SHARED -DCMAKE_INSTALL_PREFIX=$PWD/build_shared $COMMON_OPTIONS
+          cmake --build build_shared
+          cmake --install build_shared
+          cmake -S glfw -B build_static -DGLFW_LIBRARY_TYPE=STATIC -DCMAKE_INSTALL_PREFIX=$PWD/build_static $COMMON_OPTIONS
+          cmake --build build_static
+          cmake --install build_static
+
+      - name: PkgConfig build with static linking (Linux)
+        if: matrix.os == 'ubuntu'
+        shell: bash
+        env:
+          PKG_CONFIG_PATH: ${{github.workspace}}/build_static/lib/pkgconfig
+        run: cargo clean && cargo run -vv --example=version --features=static_link
+        
+      - name: PkgConfig build with shared linking (Linux)
+        if: matrix.os == 'ubuntu'
+        shell: bash
+        env:
+          PKG_CONFIG_PATH: ${{github.workspace}}/build_shared/lib/pkgconfig
+        run: cargo clean && cargo run -vv --example=version
+    
       # We don't pass --no-default-features, so, this generates bindings for 
       # vulkan and native_gl/egl + other handles too by including system headers.
       - name: Generate Bindings
