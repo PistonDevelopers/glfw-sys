@@ -64,7 +64,7 @@ jobs:
         run: brew install glfw
 
       - name: PkgConfig build with static linking (MacOs)
-        if: matrix.os == 'ubuntu' || matrix.os == 'macos'
+        if: matrix.os == 'macos'
         shell: bash
         run: cargo clean && cargo run -vv --example=version --features=static_link
       
