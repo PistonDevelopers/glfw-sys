@@ -21,44 +21,88 @@ fn main() {
     #[cfg(feature = "bindgen")]
     generate_bindings(features, &out_dir);
 
-    // only for mac/windows.
-    // other platforms like linux/bsd should install their platform libraries
-    // using system package manager.
-    //
-    // if other platforms require static builds, you may use src builds instead.
-    #[cfg(not(feature = "src_build"))]
-    download_libs(features, &out_dir);
+    // lets special case emscripten and early return.
+    if features.os == TargetOs::Emscripten {
+        // tell emscripten to expose glfw bindings
+        println!("cargo:rustc-link-arg=-sUSE_GLFW=3");
+        // Without this, we get errors like
+        // = note: wasm-ld: error: .../basic.diqs9uv01tyf3yxt0iu6v8zc8.rcgu.o: undefined symbol: glfwGetError
+        println!("cargo:rustc-link-arg=-sERROR_ON_UNDEFINED_SYMBOLS=0");
+        return;
+    }
 
-    // build from src, instead of using prebuilt-libraries.
-    #[cfg(feature = "src_build")]
-    build_from_src(features, &out_dir);
-
-    // emit the linker flags
-    // requires src_build if not win/mac os, as most distros only provide shared libs.
-    if features.static_link {
-        println!("cargo:rustc-link-lib=static=glfw3");
+    // not src build and not prebuilt_libs => use pkg-config
+    let pkgconfig_build = !features.src_build && !features.prebuilt_libs;
+    if features.src_build {
+        // build from src, instead of using prebuilt-libraries. ignore on emscripten target.
+        #[cfg(feature = "src_build")]
+        build_from_src(features, &out_dir);
+    } else if features.prebuilt_libs {
+        download_libs(features, &out_dir);
     } else {
-        match features.os {
-            TargetOs::Win => println!("cargo:rustc-link-lib=dylib=glfw3dll"),
-            _ => println!("cargo:rustc-link-lib=dylib=glfw"),
+        assert!(pkgconfig_build);
+        // emits linker flags by default.
+        match pkg_config::Config::new()
+            .statik(features.static_link)
+            .atleast_version("3.4.0")
+            .probe("glfw3")
+        {
+            Ok(lib) => println!("pkg-config found glfw library {lib:#?}"),
+            Err(e) => panic!("pkg-config failed to find glfw library: {e}"),
         }
     }
-    // extra libraries for win/mac
+
+    // pkg-config takes care of emitting linker flags, so we only explicitly
+    // need to emit them if we aren't using pkg-config.
+    if !pkgconfig_build {
+        if features.static_link {
+            println!("cargo:rustc-link-lib=static=glfw3");
+        } else {
+            match features.os {
+                TargetOs::Win => println!("cargo:rustc-link-lib=dylib=glfw3dll"),
+                _ => println!("cargo:rustc-link-lib=dylib=glfw"),
+            }
+        }
+    }
+
+    // First, we link system libs recommended by official glfw docs
+    // from glfw/src/CmakeLists.txt - glfw_PKG_LIBS
+    // and https://www.glfw.org/docs/latest/build_guide.html
+
+    // pkg-config builds will already emit these flags, so we only
+    // need to emit them if we aren't using pkg-config
+    if !pkgconfig_build {
+        match features.os {
+            TargetOs::Win => {
+                println!("cargo:rustc-link-lib=gdi32");
+            }
+            TargetOs::Mac => {
+                println!("cargo:rustc-link-lib=framework=Cocoa");
+                println!("cargo:rustc-link-lib=framework=IOKit");
+                println!("cargo:rustc-link-lib=framework=CoreFoundation");
+            }
+            _ => {}
+        }
+    }
+    // next, we link extra libs based on glfw-rs/src/ffi/links.rs
+    // TODO: check if we actually need these.
     match features.os {
         TargetOs::Win => {
-            println!("cargo:rustc-link-lib=dylib=gdi32");
-            println!("cargo:rustc-link-lib=dylib=user32");
-            println!("cargo:rustc-link-lib=dylib=kernel32");
-            println!("cargo:rustc-link-lib=dylib=shell32");
+            println!("cargo:rustc-link-lib=opengl32");
+            println!("cargo:rustc-link-lib=user32");
+            println!("cargo:rustc-link-lib=shell32");
         }
         TargetOs::Mac => {
-            println!("cargo:rustc-link-lib=framework=Cocoa");
-            println!("cargo:rustc-link-lib=framework=IOKit");
-            println!("cargo:rustc-link-lib=framework=CoreFoundation");
+            println!("cargo:rustc-link-lib=framework=OpenGL");
             println!("cargo:rustc-link-lib=framework=QuartzCore");
         }
-        TargetOs::Linux => {
-            // Gl? idk.
+        TargetOs::Linux | TargetOs::Others => {
+            if features.x11 {
+                println!("cargo:rustc-link-lib=X11");
+            }
+            if features.wayland {
+                println!("cargo:rustc-link-lib=wayland-client");
+            }
         }
         _ => {}
     }
@@ -70,6 +114,7 @@ enum TargetOs {
     Win,
     Mac,
     Linux,
+    Emscripten,
     Others,
 }
 /// The features enabled for this build
@@ -102,34 +147,46 @@ struct Features {
     /// generate bindings for native gl bindings like wgl, glx, nsgl, egl etc..
     /// For X11, you can explicitly enable egl-related functionality using `egl` feature.
     gl: bool,
+    /// whether we are doing a src build
+    src_build: bool,
+    /// whether we are using prebuilt libs
+    /// This is only true if feature is enabled AND target is win/mac
+    prebuilt_libs: bool,
 }
 /// Use `cfg` macro to get the selected features.
 impl Default for Features {
     fn default() -> Self {
+        let os = match std::env::var("CARGO_CFG_TARGET_OS")
+            .expect("failed to get target os")
+            .as_str()
+        {
+            "windows" => TargetOs::Win,
+            "macos" => TargetOs::Mac,
+            "linux" => TargetOs::Linux,
+            "emscripten" => TargetOs::Emscripten,
+            _ => TargetOs::Others,
+        };
         Self {
             static_link: cfg!(feature = "static_link"),
             vulkan: cfg!(feature = "vulkan"),
             native: cfg!(feature = "native_handles"),
-            os: match std::env::var("CARGO_CFG_TARGET_OS")
-                .expect("failed to get target os")
-                .as_str()
-            {
-                "windows" => TargetOs::Win,
-                "macos" => TargetOs::Mac,
-                "linux" => TargetOs::Linux,
-                _ => TargetOs::Others,
-            },
+            os,
             wayland: cfg!(feature = "wayland"),
             x11: cfg!(feature = "x11"),
             egl: cfg!(feature = "native_egl"),
             osmesa: cfg!(feature = "osmesa"),
             bindgen: cfg!(feature = "bindgen"),
             gl: cfg!(feature = "native_gl"),
+            src_build: cfg!(feature = "src_build"),
+            // this feature only works on windows and mac
+            prebuilt_libs: cfg!(feature = "prebuilt_libs")
+                && (os == TargetOs::Win || os == TargetOs::Mac),
         }
     }
 }
 /// builds from source using cmake.
 /// The sources are included with this crate.
+/// feature-gated to make cmake crate optional.
 #[cfg(feature = "src_build")]
 fn build_from_src(features: Features, _out_dir: &str) {
     let mut config = cmake::Config::new("./glfw");
@@ -169,6 +226,7 @@ fn build_from_src(features: Features, _out_dir: &str) {
 }
 
 /// Generates bindings using bindgen
+/// feature-gated to make bindgen crate optional
 #[cfg(feature = "bindgen")]
 fn generate_bindings(features: Features, out_dir: &str) {
     assert!(features.bindgen); // sanity check
@@ -266,21 +324,26 @@ fn generate_bindings(features: Features, out_dir: &str) {
     for item in DUPLICATE_ITEMS {
         bindings = bindings.blocklist_item(item);
     }
+    // workaround for emscripten - https://github.com/rust-lang/rust-bindgen/issues/1941
+    if features.os == TargetOs::Emscripten {
+        bindings = bindings.clang_arg("-fvisibility=default");
+    }
     // finally!
-    bindings
+    bindings = bindings
         .merge_extern_blocks(true)
         // default is "u32", but glfw uses i32 in its API.
         .default_macro_constant_type(bindgen::MacroTypeVariation::Signed)
         // we only care about items from glfw3 header
         // This is the name of the header we gave for our made-up header above where we merged everything.
-        .allowlist_file(".*glfw3\\.h")
+        .allowlist_file(".*glfw3\\.h");
+    println!("bindgen final config: {:#?}", bindings);
+    bindings
         .generate()
         .expect("failed to generate bindings")
         .write_to_file(format!("{out_dir}/bindings.rs"))
         .expect("failed to write bindings to out_dir/bindings.rs");
 }
 /// Download prebuilt libraries
-#[cfg(not(feature = "src_build"))]
 fn download_libs(features: Features, out_dir: &str) {
     const URL: &str = "https://github.com/glfw/glfw/releases/download/3.4";
     let zip_name: &str = match features.os {
@@ -295,7 +358,7 @@ fn download_libs(features: Features, out_dir: &str) {
         }
         TargetOs::Mac => "glfw-3.4.bin.MACOS",
         _ => {
-            return;
+            unimplemented!("prebuilt libs not available for this OS");
         }
     };
     let url = format!("{}/{}.zip", URL, zip_name);

@@ -476,24 +476,6 @@ pub struct VkAllocationCallbacks {
     pub pfnInternalAllocation: PFN_vkInternalAllocationNotification,
     pub pfnInternalFree: PFN_vkInternalFreeNotification,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of VkAllocationCallbacks"][::std::mem::size_of::<VkAllocationCallbacks>() - 48usize];
-    ["Alignment of VkAllocationCallbacks"]
-        [::std::mem::align_of::<VkAllocationCallbacks>() - 8usize];
-    ["Offset of field: VkAllocationCallbacks::pUserData"]
-        [::std::mem::offset_of!(VkAllocationCallbacks, pUserData) - 0usize];
-    ["Offset of field: VkAllocationCallbacks::pfnAllocation"]
-        [::std::mem::offset_of!(VkAllocationCallbacks, pfnAllocation) - 8usize];
-    ["Offset of field: VkAllocationCallbacks::pfnReallocation"]
-        [::std::mem::offset_of!(VkAllocationCallbacks, pfnReallocation) - 16usize];
-    ["Offset of field: VkAllocationCallbacks::pfnFree"]
-        [::std::mem::offset_of!(VkAllocationCallbacks, pfnFree) - 24usize];
-    ["Offset of field: VkAllocationCallbacks::pfnInternalAllocation"]
-        [::std::mem::offset_of!(VkAllocationCallbacks, pfnInternalAllocation) - 32usize];
-    ["Offset of field: VkAllocationCallbacks::pfnInternalFree"]
-        [::std::mem::offset_of!(VkAllocationCallbacks, pfnInternalFree) - 40usize];
-};
 pub type PFN_vkGetInstanceProcAddr = ::std::option::Option<
     unsafe extern "C" fn(
         instance: VkInstance,
@@ -670,21 +652,6 @@ pub struct GLFWvidmode {
     #[doc = " The refresh rate, in Hz, of the video mode."]
     pub refreshRate: ::std::os::raw::c_int,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of GLFWvidmode"][::std::mem::size_of::<GLFWvidmode>() - 24usize];
-    ["Alignment of GLFWvidmode"][::std::mem::align_of::<GLFWvidmode>() - 4usize];
-    ["Offset of field: GLFWvidmode::width"][::std::mem::offset_of!(GLFWvidmode, width) - 0usize];
-    ["Offset of field: GLFWvidmode::height"][::std::mem::offset_of!(GLFWvidmode, height) - 4usize];
-    ["Offset of field: GLFWvidmode::redBits"]
-        [::std::mem::offset_of!(GLFWvidmode, redBits) - 8usize];
-    ["Offset of field: GLFWvidmode::greenBits"]
-        [::std::mem::offset_of!(GLFWvidmode, greenBits) - 12usize];
-    ["Offset of field: GLFWvidmode::blueBits"]
-        [::std::mem::offset_of!(GLFWvidmode, blueBits) - 16usize];
-    ["Offset of field: GLFWvidmode::refreshRate"]
-        [::std::mem::offset_of!(GLFWvidmode, refreshRate) - 20usize];
-};
 #[doc = " @brief Gamma ramp.\n\n  This describes the gamma ramp for a monitor.\n\n  @sa @ref monitor_gamma\n  @sa @ref glfwGetGammaRamp\n  @sa @ref glfwSetGammaRamp\n\n  @since Added in version 3.0.\n\n  @ingroup monitor"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -698,16 +665,6 @@ pub struct GLFWgammaramp {
     #[doc = " The number of elements in each array."]
     pub size: ::std::os::raw::c_uint,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of GLFWgammaramp"][::std::mem::size_of::<GLFWgammaramp>() - 32usize];
-    ["Alignment of GLFWgammaramp"][::std::mem::align_of::<GLFWgammaramp>() - 8usize];
-    ["Offset of field: GLFWgammaramp::red"][::std::mem::offset_of!(GLFWgammaramp, red) - 0usize];
-    ["Offset of field: GLFWgammaramp::green"]
-        [::std::mem::offset_of!(GLFWgammaramp, green) - 8usize];
-    ["Offset of field: GLFWgammaramp::blue"][::std::mem::offset_of!(GLFWgammaramp, blue) - 16usize];
-    ["Offset of field: GLFWgammaramp::size"][::std::mem::offset_of!(GLFWgammaramp, size) - 24usize];
-};
 #[doc = " @brief Image data.\n\n  This describes a single 2D image.  See the documentation for each related\n  function what the expected pixel format is.\n\n  @sa @ref cursor_custom\n  @sa @ref window_icon\n\n  @since Added in version 2.1.\n  @glfw3 Removed format and bytes-per-pixel members.\n\n  @ingroup window"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -719,14 +676,6 @@ pub struct GLFWimage {
     #[doc = " The pixel data of this image, arranged left-to-right, top-to-bottom."]
     pub pixels: *mut ::std::os::raw::c_uchar,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of GLFWimage"][::std::mem::size_of::<GLFWimage>() - 16usize];
-    ["Alignment of GLFWimage"][::std::mem::align_of::<GLFWimage>() - 8usize];
-    ["Offset of field: GLFWimage::width"][::std::mem::offset_of!(GLFWimage, width) - 0usize];
-    ["Offset of field: GLFWimage::height"][::std::mem::offset_of!(GLFWimage, height) - 4usize];
-    ["Offset of field: GLFWimage::pixels"][::std::mem::offset_of!(GLFWimage, pixels) - 8usize];
-};
 #[doc = " @brief Gamepad input state\n\n  This describes the input state of a gamepad.\n\n  @sa @ref gamepad\n  @sa @ref glfwGetGamepadState\n\n  @since Added in version 3.3.\n\n  @ingroup input"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -736,15 +685,6 @@ pub struct GLFWgamepadstate {
     #[doc = " The states of each [gamepad axis](@ref gamepad_axes), in the range -1.0\n  to 1.0 inclusive."]
     pub axes: [f32; 6usize],
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of GLFWgamepadstate"][::std::mem::size_of::<GLFWgamepadstate>() - 40usize];
-    ["Alignment of GLFWgamepadstate"][::std::mem::align_of::<GLFWgamepadstate>() - 4usize];
-    ["Offset of field: GLFWgamepadstate::buttons"]
-        [::std::mem::offset_of!(GLFWgamepadstate, buttons) - 0usize];
-    ["Offset of field: GLFWgamepadstate::axes"]
-        [::std::mem::offset_of!(GLFWgamepadstate, axes) - 16usize];
-};
 #[doc = " @brief Custom heap memory allocator.\n\n  This describes a custom heap memory allocator for GLFW.  To set an allocator, pass it\n  to @ref glfwInitAllocator before initializing the library.\n\n  @sa @ref init_allocator\n  @sa @ref glfwInitAllocator\n\n  @since Added in version 3.4.\n\n  @ingroup init"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -758,18 +698,6 @@ pub struct GLFWallocator {
     #[doc = " The user pointer for this custom allocator.  This value will be passed to the\n  allocator functions."]
     pub user: *mut ::std::os::raw::c_void,
 }
-#[allow(clippy::unnecessary_operation, clippy::identity_op)]
-const _: () = {
-    ["Size of GLFWallocator"][::std::mem::size_of::<GLFWallocator>() - 32usize];
-    ["Alignment of GLFWallocator"][::std::mem::align_of::<GLFWallocator>() - 8usize];
-    ["Offset of field: GLFWallocator::allocate"]
-        [::std::mem::offset_of!(GLFWallocator, allocate) - 0usize];
-    ["Offset of field: GLFWallocator::reallocate"]
-        [::std::mem::offset_of!(GLFWallocator, reallocate) - 8usize];
-    ["Offset of field: GLFWallocator::deallocate"]
-        [::std::mem::offset_of!(GLFWallocator, deallocate) - 16usize];
-    ["Offset of field: GLFWallocator::user"][::std::mem::offset_of!(GLFWallocator, user) - 24usize];
-};
 unsafe extern "C" {
     #[doc = " @brief Initializes the GLFW library.\n\n  This function initializes the GLFW library.  Before most GLFW functions can\n  be used, GLFW must be initialized, and before an application terminates GLFW\n  should be terminated in order to free any resources allocated during or\n  after initialization.\n\n  If this function fails, it calls @ref glfwTerminate before returning.  If it\n  succeeds, you should call @ref glfwTerminate before the application exits.\n\n  Additional calls to this function after successful initialization but before\n  termination will return `GLFW_TRUE` immediately.\n\n  The @ref GLFW_PLATFORM init hint controls which platforms are considered during\n  initialization.  This also depends on which platforms the library was compiled to\n  support.\n\n  @return `GLFW_TRUE` if successful, or `GLFW_FALSE` if an\n  [error](@ref error_handling) occurred.\n\n  @errors Possible errors include @ref GLFW_PLATFORM_UNAVAILABLE and @ref\n  GLFW_PLATFORM_ERROR.\n\n  @remark @macos This function will change the current directory of the\n  application to the `Contents/Resources` subdirectory of the application's\n  bundle, if present.  This can be disabled with the @ref\n  GLFW_COCOA_CHDIR_RESOURCES init hint.\n\n  @remark @macos This function will create the main menu and dock icon for the\n  application.  If GLFW finds a `MainMenu.nib` it is loaded and assumed to\n  contain a menu bar.  Otherwise a minimal menu bar is created manually with\n  common commands like Hide, Quit and About.  The About entry opens a minimal\n  about dialog with information from the application's bundle.  The menu bar\n  and dock icon can be disabled entirely with the @ref GLFW_COCOA_MENUBAR init\n  hint.\n\n  @remark __Wayland, X11:__ If the library was compiled with support for both\n  Wayland and X11, and the @ref GLFW_PLATFORM init hint is set to\n  `GLFW_ANY_PLATFORM`, the `XDG_SESSION_TYPE` environment variable affects\n  which platform is picked.  If the environment variable is not set, or is set\n  to something other than `wayland` or `x11`, the regular detection mechanism\n  will be used instead.\n\n  @remark @x11 This function will set the `LC_CTYPE` category of the\n  application locale according to the current environment if that category is\n  still \"C\".  This is because the \"C\" locale breaks Unicode text input.\n\n  @thread_safety This function must only be called from the main thread.\n\n  @sa @ref intro_init\n  @sa @ref glfwInitHint\n  @sa @ref glfwInitAllocator\n  @sa @ref glfwTerminate\n\n  @since Added in version 1.0.\n\n  @ingroup init"]
     pub fn glfwInit() -> ::std::os::raw::c_int;

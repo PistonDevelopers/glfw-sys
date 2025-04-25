@@ -125,7 +125,6 @@ fn main() {
             glfwMakeContextCurrent(win);
 
             let ctx = glow::Context::from_loader_function_cstr(|s| {
-                
                 glfwGetProcAddress(s.as_ptr())
                     .map(|p| p as _)
                     .unwrap_or(std::ptr::null())

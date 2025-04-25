@@ -10,6 +10,11 @@ mod sys {
     mod manual;
     /// if `bindgen` is not enabled, we use pre-generated bindings.
     mod pregenerated;
+
+    #[allow(
+        unused_imports,
+        reason = "on emscripten target, this module will be empty"
+    )]
     pub use self::manual::*;
     pub use self::pregenerated::*;
 }

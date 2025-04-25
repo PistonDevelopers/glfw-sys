@@ -19,6 +19,8 @@ all = ["x11", "wayland", "native_handles", "native_gl", "native_egl", "vulkan"]
 bindgen = ["dep:bindgen"]
 # build from source, instead of using prebuilt libraries.
 src_build = ["dep:cmake"]
+prebuilt_libs = []
+
 static_link = [] # static link (if on linux, src_build must also be enabled)
 vulkan = []
 wayland = []
@@ -34,6 +36,7 @@ osmesa = []
 [build-dependencies]
 bindgen = { version = "0.71", optional = true }
 cmake = { version = "0.1", optional = true }
+pkg-config = "0.3"
 
 [dev-dependencies]
 glow = {version = "0.16"}

@@ -24,6 +24,14 @@ jobs:
           sudo apt update
           sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libwayland-dev libxkbcommon-dev
 
+      # To check vulkan bindings.
+      - name: Prepare Vulkan SDK
+        uses: humbletim/setup-vulkan-sdk@v1.2.1
+        with:
+          vulkan-query-version: latest
+          vulkan-components: Vulkan-Headers
+          vulkan-use-cache: true
+
       - name: Source build with static link
         shell: bash
         run: cargo clean && cargo run -vv --example=version --features=src_build,static_link
@@ -36,32 +44,41 @@ jobs:
         shell: bash
         # linux pre-built static libs are not provided, so, static linkign requires src_build.
         if: matrix.os != 'ubuntu'
-        run: cargo clean && cargo run -vv --example=version --features=static_link
+        run: cargo clean && cargo run -vv --example=version --features=static_link,prebuilt_libs
       
+      - name: Prebuilt libs with shared link
+        shell: bash
+        if: matrix.os != 'ubuntu'
+        run: cargo clean && cargo run -vv --example=version --features=prebuilt_libs
+            
       # We delay this, because we don't want the previous steps to "accidentally" succeed
       # by linking to system libraries (on linux).
       - name: Install Glfw Packages (Linux)
         if: matrix.os == 'ubuntu'
         shell: bash
         run: sudo apt install libglfw3-dev
-
-      - name: Prebuilt libs with shared link
-        shell: bash
-        run: cargo clean && cargo run -vv --example=version && cargo build -vv --examples
       
-      # To check vulkan bindings.
-      - name: Prepare Vulkan SDK
-        uses: humbletim/setup-vulkan-sdk@v1.2.1
-        with:
-          vulkan-query-version: latest
-          vulkan-components: Vulkan-Headers
-          vulkan-use-cache: true
+      - name: Install Glfw Packages (MacOs)
+        if: matrix.os == 'macos'
+        shell: bash
+        run: brew install glfw
+
+      - name: PkgConfig build with static linking (MacOs)
+        if: matrix.os == 'ubuntu' || matrix.os == 'macos'
+        shell: bash
+        run: cargo clean && cargo run -vv --example=version --features=static_link
+      
+      - name: PkgConfig build with shared linking (MacOs And Linux)
+        if: matrix.os == 'ubuntu' || matrix.os == 'macos'
+        shell: bash
+        run: cargo clean && cargo run -vv --example=version
+        
       
       # We don't pass --no-default-features, so, this generates bindings for 
       # vulkan and native_gl/egl + other handles too by including system headers.
       - name: Generate Bindings
         shell: bash
-        run: cargo clean && cargo run -vv --example=version --features=bindgen
+        run: cargo clean && cargo run -vv --example=version --features=bindgen,src_build
       
       # Just to make sure that the script works on all platforms.
       - name: Check gen_bindings.sh script

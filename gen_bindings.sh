@@ -38,5 +38,5 @@ esac
 # merge-extern-blocks to keep bindings together.
 # signed macro-constant-type, as the default is to use u32, but glfw uses i32 for its API. 
 # allowlist-file to only include what we actually need (skip most items from other headers like vulkan)
-
-bindgen --merge-extern-blocks --default-macro-constant-type signed --raw-line="$PREPEND" --allowlist-file=".*glfw3\.h" -o "$OUTPUT_PATH" "$HEADER_PATH" -- $CLANG_ARGS
+# no-layout-tests to avoid erroring on platforms with different pointer width (eg: wasm32-unknown-emscripten).
+bindgen --merge-extern-blocks --default-macro-constant-type signed --no-layout-tests --raw-line="$PREPEND" --allowlist-file=".*glfw3\.h" -o "$OUTPUT_PATH" "$HEADER_PATH" -- $CLANG_ARGS
