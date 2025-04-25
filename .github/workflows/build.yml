@@ -52,13 +52,20 @@ jobs:
         run: cargo clean && cargo run -vv --example=version --features=prebuilt_libs
             
       # ubuntu 24.04 doesn't have glfw 3.4 yet (as of 26th April 2025)
-      # so, we use homebrew's glfw to test pkg-config builds.
-      - name: Install HomeBrew (Linux)
+      # so, we must build from source for glfw binaries
+      - name: Build Glfw Static Package for Linux
         if: matrix.os == 'ubuntu'
-        uses: Homebrew/actions/setup-homebrew@master
+        shell: bash
+        run: |
+          rm -rf glfw/build
+          cd glfw
+          cmake -S . -B build -DGLFW_LIBRARY_TYPE=STATIC -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DCMAKE_BUILD_TYPE=Debug -DGLFW_BUILD_WAYLAND=ON -DGLFW_BUILD_X11=ON
+          cmake --build build
+          sudo cmake --install build
+
       
-      - name: Install Glfw Packages (MacOs + Linux)
-        if: matrix.os != 'windows'
+      - name: Install Glfw Packages (MacOs)
+        if: matrix.os == 'macos'
         shell: bash
         run: brew install glfw
 
@@ -67,11 +74,20 @@ jobs:
         shell: bash
         run: cargo clean && cargo run -vv --example=version --features=static_link
       
+      - name: Build Glfw Shared Package for Linux
+        if: matrix.os == 'ubuntu'
+        shell: bash
+        run: |
+          rm -rf glfw/build
+          cd glfw
+          cmake -S . -B build -DGLFW_LIBRARY_TYPE=SHARED -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DCMAKE_BUILD_TYPE=Debug -DGLFW_BUILD_WAYLAND=ON -DGLFW_BUILD_X11=ON
+          cmake --build build
+          sudo cmake --install build
+
       - name: PkgConfig build with shared linking (MacOs + Linux)
         if: matrix.os != 'windows'
         shell: bash
         run: cargo clean && cargo run -vv --example=version
-        
       
       # We don't pass --no-default-features, so, this generates bindings for 
       # vulkan and native_gl/egl + other handles too by including system headers.
