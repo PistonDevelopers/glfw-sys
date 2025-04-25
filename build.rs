@@ -34,7 +34,7 @@ fn main() {
     // not src build and not prebuilt_libs => use pkg-config
     let pkgconfig_build = !features.src_build && !features.prebuilt_libs;
     if features.src_build {
-        // build from src, instead of using prebuilt-libraries. ignore on emscripten target.
+        // build from src, instead of using prebuilt-libraries.
         #[cfg(feature = "src_build")]
         build_from_src(features, &out_dir);
     } else if features.prebuilt_libs {
@@ -166,6 +166,23 @@ impl Default for Features {
             "emscripten" => TargetOs::Emscripten,
             _ => TargetOs::Others,
         };
+        // on emscripten, we ignore everything.
+        if os == TargetOs::Emscripten {
+            return Self {
+                static_link: false,
+                vulkan: false,
+                native: false,
+                os,
+                wayland: false,
+                x11: false,
+                egl: false,
+                osmesa: false,
+                bindgen: false,
+                gl: false,
+                src_build: false,
+                prebuilt_libs: false,
+            };
+        }
         Self {
             static_link: cfg!(feature = "static_link"),
             vulkan: cfg!(feature = "vulkan"),
@@ -233,13 +250,19 @@ fn generate_bindings(features: Features, out_dir: &str) {
                                // first, add glfw header.
     let glfw_header = include_str!("./glfw/include/GLFW/glfw3.h");
     let mut bindings = bindgen::Builder::default();
-    // vulkan requires `vulkan.h`, which depends on VULKAN_SDK env var on windows/mac.
-    if features.vulkan && matches!(features.os, TargetOs::Win | TargetOs::Mac) {
-        let vulkan_sdk_dir = std::env::var("VULKAN_SDK").expect("failed to get vulkan sdk dir");
-        if !std::path::Path::new(&vulkan_sdk_dir).exists() {
-            println!("cargo:warning=missing vulkan sdk dir {vulkan_sdk_dir} for vulkan.h");
+
+    if features.vulkan {
+        // vulkan requires `vulkan.h`, which lives in $VULKAN_SDK/include.
+        if let Ok(vulkan_sdk_dir) = std::env::var("VULKAN_SDK") {
+            println!("cargo:rerun-if-env-changed=VULKAN_SDK");
+            println!("found vulkan sdk dir {vulkan_sdk_dir}");
+            if !std::path::Path::new(&vulkan_sdk_dir).exists() {
+                println!("cargo:warning=missing vulkan sdk dir {vulkan_sdk_dir} for vulkan.h");
+            }
+            bindings = bindings.clang_arg(format!("-I{vulkan_sdk_dir}/include"));
+        } else {
+            println!("cargo:warning=missing VULKAN_SDK env var for vulkan.h. bindgen may fail");
         }
-        bindings = bindings.clang_arg(format!("-I{vulkan_sdk_dir}/include"));
     }
     // if vulkan enabled, add GLFW_INCLUDE_VULKAN to generate vk-related bindings.
     let vulkan_include = features
