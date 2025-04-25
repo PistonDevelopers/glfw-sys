@@ -95,6 +95,7 @@ jobs:
         shell: bash
         env:
           PKG_CONFIG_PATH: ${{github.workspace}}/build_shared/lib/pkgconfig
+          LD_LIBRARY_PATH: ${{github.workspace}}/build_shared/lib
         run: cargo clean && cargo run -vv --example=version
     
       # We don't pass --no-default-features, so, this generates bindings for 
