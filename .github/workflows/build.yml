@@ -22,7 +22,7 @@ jobs:
         if: matrix.os == 'ubuntu'
         run: |
           sudo apt update
-          sudo apt install libwayland-dev libxkbcommon-dev xorg-dev libgl-dev libx11-dev libxutil-dev libxkbfile-dev libx11-xkb-dev libxf86vm-dev libglx-dev libwayland-egl-dev libinput-dev
+          sudo apt install libwayland-dev libxkbcommon-dev xorg-dev libgl-dev libx11-dev libxkbfile-dev libglx-dev libinput-dev
 
       # To check vulkan bindings.
       - name: Prepare Vulkan SDK
