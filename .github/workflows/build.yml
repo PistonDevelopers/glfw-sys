@@ -51,25 +51,24 @@ jobs:
         if: matrix.os != 'ubuntu'
         run: cargo clean && cargo run -vv --example=version --features=prebuilt_libs
             
-      # We delay this, because we don't want the previous steps to "accidentally" succeed
-      # by linking to system libraries (on linux).
-      - name: Install Glfw Packages (Linux)
+      # ubuntu 24.04 doesn't have glfw 3.4 yet (as of 26th April 2025)
+      # so, we use homebrew's glfw to test pkg-config builds.
+      - name: Install HomeBrew (Linux)
         if: matrix.os == 'ubuntu'
-        shell: bash
-        run: sudo apt install libglfw3-dev
+        uses: Homebrew/actions/setup-homebrew@master
       
-      - name: Install Glfw Packages (MacOs)
-        if: matrix.os == 'macos'
+      - name: Install Glfw Packages (MacOs + Linux)
+        if: matrix.os != 'windows'
         shell: bash
         run: brew install glfw
 
-      - name: PkgConfig build with static linking (MacOs)
-        if: matrix.os == 'macos'
+      - name: PkgConfig build with static linking (MacOs + Linux)
+        if: matrix.os != 'windows'
         shell: bash
         run: cargo clean && cargo run -vv --example=version --features=static_link
       
-      - name: PkgConfig build with shared linking (MacOs And Linux)
-        if: matrix.os == 'ubuntu' || matrix.os == 'macos'
+      - name: PkgConfig build with shared linking (MacOs + Linux)
+        if: matrix.os != 'windows'
         shell: bash
         run: cargo clean && cargo run -vv --example=version
         
