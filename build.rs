@@ -21,6 +21,10 @@ fn main() {
     #[cfg(feature = "bindgen")]
     generate_bindings(features, &out_dir);
 
+    // Lets skip everything else on docs.rs builds
+    if features.docs_rs {
+        return;
+    }
     // lets special case emscripten and early return.
     if features.os == TargetOs::Emscripten {
         // tell emscripten to expose glfw bindings
@@ -159,6 +163,9 @@ struct Features {
     /// whether we are using prebuilt libs
     /// This is only true if feature is enabled AND target is win/mac
     prebuilt_libs: bool,
+    /// whether we are running on docs.rs
+    /// We want to skip building/linking etc.. to avoid failing on docs.rs builds.
+    docs_rs: bool,
 }
 /// Use `cfg` macro to get the selected features.
 impl Default for Features {
@@ -173,6 +180,8 @@ impl Default for Features {
             "emscripten" => TargetOs::Emscripten,
             _ => TargetOs::Others,
         };
+        let bindgen = cfg!(feature = "bindgen");
+        let docs_rs = std::env::var("DOCS_RS").is_ok();
         // on emscripten, we ignore everything.
         if os == TargetOs::Emscripten {
             return Self {
@@ -184,22 +193,28 @@ impl Default for Features {
                 x11: false,
                 egl: false,
                 osmesa: false,
-                bindgen: false,
+                bindgen,
                 gl: false,
                 src_build: false,
+                docs_rs,
                 prebuilt_libs: false,
             };
         }
+        // on docs-rs builds, skip vulkan on non-linux platforms, as they lack VULKAN_SDK headers
+        let skip_vulkan = docs_rs && os != TargetOs::Linux;
         Self {
             static_link: cfg!(feature = "static-link"),
-            vulkan: cfg!(feature = "vulkan"),
+
+            vulkan: cfg!(feature = "vulkan") && !skip_vulkan,
+
             native: cfg!(feature = "native-handles"),
             os,
+            bindgen,
+            docs_rs,
             wayland: cfg!(feature = "wayland"),
             x11: cfg!(feature = "x11"),
             egl: cfg!(feature = "native-egl"),
             osmesa: cfg!(feature = "osmesa"),
-            bindgen: cfg!(feature = "bindgen"),
             gl: cfg!(feature = "native-gl"),
             src_build: cfg!(feature = "src-build"),
             // this feature only works on windows and mac
@@ -253,8 +268,7 @@ fn build_from_src(features: Features, _out_dir: &str) {
 /// feature-gated to make bindgen crate optional
 #[cfg(feature = "bindgen")]
 fn generate_bindings(features: Features, out_dir: &str) {
-    assert!(features.bindgen); // sanity check
-                               // first, add glfw header.
+    // first, add glfw header.
     let glfw_header = include_str!("./glfw/include/GLFW/glfw3.h");
     let mut bindings = bindgen::Builder::default();
 
@@ -366,7 +380,10 @@ fn generate_bindings(features: Features, out_dir: &str) {
         // we only care about items from glfw3 header
         // This is the name of the header we gave for our made-up header above where we merged everything.
         .allowlist_file(".*glfw3\\.h");
-    println!("bindgen final config: {:#?}", bindings);
+    if !features.docs_rs {
+        // skip printing this on docs.rs, as the build logs have a character limit
+        println!("bindgen final config: {:#?}", bindings);
+    }
     bindings
         .generate()
         .expect("failed to generate bindings")

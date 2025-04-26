@@ -40,3 +40,7 @@ pkg-config = "0.3"
 
 [dev-dependencies]
 glow = {version = "0.16"}
+
+# lets skip building glfw on docs.rs builds
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-pc-windows-msvc", "wasm32-unknown-emscripten"]
