@@ -321,7 +321,7 @@ fn generate_bindings(features: Features, out_dir: &str) {
                 }
             }
             // wayland/x11 work in all sorts of OSes
-            _ => {
+            TargetOs::Linux | TargetOs::Others => {
                 if features.wayland {
                     native_include.push_str("#define GLFW_EXPOSE_NATIVE_WAYLAND\n");
                 }
@@ -341,6 +341,7 @@ fn generate_bindings(features: Features, out_dir: &str) {
                     native_include.push_str("\n#define GLFW_EXPOSE_NATIVE_OS_MESA\n");
                 }
             }
+            TargetOs::Emscripten => {}
         };
     }
     // if we don't define this, on some platforms (like mac),

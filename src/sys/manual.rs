@@ -181,6 +181,7 @@ type RROutput = XID;
 #[cfg(all(
     not(target_os = "macos"),
     not(target_os = "windows"),
+    not(target_os = "emscripten"),
     feature = "x11",
     feature = "native-handles"
 ))]
@@ -308,6 +309,7 @@ type GLXWindow = XID;
 #[cfg(all(
     not(target_os = "macos"),
     not(target_os = "windows"),
+    not(target_os = "emscripten"),
     feature = "x11",
     feature = "native-gl"
 ))]
@@ -350,6 +352,7 @@ extern "C" {
 #[cfg(all(
     not(target_os = "macos"),
     not(target_os = "windows"),
+    not(target_os = "emscripten"),
     feature = "wayland",
     feature = "native-handles"
 ))]
@@ -411,6 +414,7 @@ type EGLContext = *mut std::ffi::c_void;
 #[cfg(all(
     not(target_os = "macos"),
     not(target_os = "windows"),
+    not(target_os = "emscripten"),
     any(
         all(feature = "wayland", feature = "native-gl"),
         feature = "native-egl"
