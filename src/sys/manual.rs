@@ -7,7 +7,7 @@
 use super::*;
 
 type HWND = *mut std::ffi::c_void;
-#[cfg(all(target_os = "windows", feature = "native_handles"))]
+#[cfg(all(target_os = "windows", feature = "native-handles"))]
 extern "C" {
     /** @brief Returns the adapter device name of the specified monitor.
      *
@@ -70,7 +70,7 @@ extern "C" {
     pub fn glfwGetWin32Window(window: *mut GLFWwindow) -> HWND;
 }
 type HGLRC = *mut std::ffi::c_void;
-#[cfg(all(target_os = "windows", feature = "native_gl"))]
+#[cfg(all(target_os = "windows", feature = "native-gl"))]
 extern "C" {
     /** @brief Returns the `HGLRC` of the specified window.
      *
@@ -100,7 +100,7 @@ extern "C" {
 type CGDirectDisplayID = u32;
 type NSWindow = *mut std::ffi::c_void;
 type NSView = *mut std::ffi::c_void;
-#[cfg(all(target_os = "macos", feature = "native_handles"))]
+#[cfg(all(target_os = "macos", feature = "native-handles"))]
 extern "C" {
     /** @brief Returns the `CGDirectDisplayID` of the specified monitor.
      *
@@ -154,7 +154,7 @@ extern "C" {
     pub fn glfwGetCocoaView(window: *mut GLFWwindow) -> NSView;
 }
 type NSOpenGLContext = *mut std::ffi::c_void;
-#[cfg(all(target_os = "macos", feature = "native_gl"))]
+#[cfg(all(target_os = "macos", feature = "native-gl"))]
 extern "C" {
     /** @brief Returns the `NSOpenGLContext` of the specified window.
      *
@@ -182,7 +182,7 @@ type RROutput = XID;
     not(target_os = "macos"),
     not(target_os = "windows"),
     feature = "x11",
-    feature = "native_handles"
+    feature = "native-handles"
 ))]
 extern "C" {
     /** @brief Returns the `Display` used by GLFW.
@@ -309,7 +309,7 @@ type GLXWindow = XID;
     not(target_os = "macos"),
     not(target_os = "windows"),
     feature = "x11",
-    feature = "native_gl"
+    feature = "native-gl"
 ))]
 extern "C" {
     /** @brief Returns the `GLXContext` of the specified window.
@@ -351,7 +351,7 @@ extern "C" {
     not(target_os = "macos"),
     not(target_os = "windows"),
     feature = "wayland",
-    feature = "native_handles"
+    feature = "native-handles"
 ))]
 extern "C" {
     /** @brief Returns the `struct wl_display*` used by GLFW.
@@ -412,8 +412,8 @@ type EGLContext = *mut std::ffi::c_void;
     not(target_os = "macos"),
     not(target_os = "windows"),
     any(
-        all(feature = "wayland", feature = "native_gl"),
-        feature = "native_egl"
+        all(feature = "wayland", feature = "native-gl"),
+        feature = "native-egl"
     )
 ))]
 extern "C" {

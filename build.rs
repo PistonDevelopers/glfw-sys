@@ -31,11 +31,11 @@ fn main() {
         return;
     }
 
-    // not src build and not prebuilt_libs => use pkg-config
+    // not src build and not prebuilt-libs => use pkg-config
     let pkgconfig_build = !features.src_build && !features.prebuilt_libs;
     if features.src_build {
         // build from src, instead of using prebuilt-libraries.
-        #[cfg(feature = "src_build")]
+        #[cfg(feature = "src-build")]
         build_from_src(features, &out_dir);
     } else if features.prebuilt_libs {
         download_libs(features, &out_dir);
@@ -128,7 +128,7 @@ enum TargetOs {
 #[allow(unused)]
 #[derive(Clone, Copy)]
 struct Features {
-    /// Link statically. On Linux, this requires `src_build` to be enabled.
+    /// Link statically. On Linux, this requires `src-build` to be enabled.
     static_link: bool,
     /// Enable X11 support
     x11: bool,
@@ -191,19 +191,19 @@ impl Default for Features {
             };
         }
         Self {
-            static_link: cfg!(feature = "static_link"),
+            static_link: cfg!(feature = "static-link"),
             vulkan: cfg!(feature = "vulkan"),
-            native: cfg!(feature = "native_handles"),
+            native: cfg!(feature = "native-handles"),
             os,
             wayland: cfg!(feature = "wayland"),
             x11: cfg!(feature = "x11"),
-            egl: cfg!(feature = "native_egl"),
+            egl: cfg!(feature = "native-egl"),
             osmesa: cfg!(feature = "osmesa"),
             bindgen: cfg!(feature = "bindgen"),
-            gl: cfg!(feature = "native_gl"),
-            src_build: cfg!(feature = "src_build"),
+            gl: cfg!(feature = "native-gl"),
+            src_build: cfg!(feature = "src-build"),
             // this feature only works on windows and mac
-            prebuilt_libs: cfg!(feature = "prebuilt_libs")
+            prebuilt_libs: cfg!(feature = "prebuilt-libs")
                 && (os == TargetOs::Win || os == TargetOs::Mac),
         }
     }
@@ -211,7 +211,7 @@ impl Default for Features {
 /// builds from source using cmake.
 /// The sources are included with this crate.
 /// feature-gated to make cmake crate optional.
-#[cfg(feature = "src_build")]
+#[cfg(feature = "src-build")]
 fn build_from_src(features: Features, _out_dir: &str) {
     let mut config = cmake::Config::new("./glfw");
     config
@@ -292,7 +292,7 @@ fn generate_bindings(features: Features, out_dir: &str) {
                 "-F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/",
             );
         }
-        // includes for native_*, native_gl, egl etc.. features.
+        // includes for native_*, native-gl, egl etc.. features.
         match features.os {
             TargetOs::Win => {
                 native_include.push_str("#define GLFW_EXPOSE_NATIVE_WIN32\n");

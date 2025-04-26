@@ -9,8 +9,8 @@ This library has two main purposes:
 
 
 For normal applications, you only need to care about 2 features:
-1. `src_build` - if you want to build from source. adds around 10 seconds of build time.
-2. `static_link` - if you want to link statically. On linux, this requires `src_build` too, so prefer dynamic linking during development for faster compile times. 
+1. `src-build` - if you want to build from source. adds around 10 seconds of build time.
+2. `static-link` - if you want to link statically. On linux, this requires `src-build` too, so prefer dynamic linking during development for faster compile times. 
 
 ### Features
 
@@ -18,15 +18,15 @@ For normal applications, you only need to care about 2 features:
 
 > NOTE: For emscripten, none of these features apply. We just pass the necessary flags like `-sUSE_GLFW=3` to linker and simply let emscripten take care of things.
 
-- `static_link` - statically link glfw. If disabled, we will dynamically link glfw.
+- `static-link` - statically link glfw. If disabled, we will dynamically link glfw.
 
 We try to build glfw in this order:
-- `src_build` - If enabled, build glfw from source (sources are included with crate). Ensure `cmake` is installed and any other required dependencies.
-- `prebuilt_libs` (only for windows/macos. ignored on other platforms) - If enabled, we download and link pre-built glfw libs from <https://github.com/glfw/glfw/releases/>.
+- `src-build` - If enabled, build glfw from source (sources are included with crate). Ensure `cmake` is installed and any other required dependencies.
+- `prebuilt-libs` (only for windows/macos. ignored on other platforms) - If enabled, we download and link pre-built glfw libs from <https://github.com/glfw/glfw/releases/>.
 
 > NOTE: We use curl + tar (unzip on macos) to download and extract pre-built libs. mac/win10+ will have these by default.
 
-Finally, if neither `src_build` nor `prebuilt_libs` feature is enabled, we will try to use `pkg-config` to find and link to system glfw libs.
+Finally, if neither `src-build` nor `prebuilt-libs` feature is enabled, we will try to use `pkg-config` to find and link to system glfw libs.
 
 #### Platform Backends (non-mac and non-windows only)
 * `x11` and `wayland` - enables support for x11/wayland. Enable both and you can choose which one to use during initialization. `x11/wayland` are ignored on windows/macos platforms.
@@ -38,9 +38,9 @@ Finally, if neither `src_build` nor `prebuilt_libs` feature is enabled, we will 
 #### Native Handles
 These features expose native "HWND"/"NSWindow"/"X11Connection" etc.. handles.
 Unless you are using `wgpu`-like libs that need raw-window-handles, these features can be ignored.
-- `native_handles` - enable APIs to get platform specific window handles or display connections or monitor ids. useful for raw-window-handle support.
-- `native_gl` - enable APIs for getting platform specific gl contexts (`wgl`, `egl`, `glx`, `nsgl` etc..). Most users should ignore this. 
-- `native_egl` - enable egl API even for x11 builds, if you plan to use `egl` contexts with x11 windows. Most users should ignore this.
+- `native-handles` - enable APIs to get platform specific window handles or display connections or monitor ids. useful for raw-window-handle support.
+- `native-gl` - enable APIs for getting platform specific gl contexts (`wgl`, `egl`, `glx`, `nsgl` etc..). Most users should ignore this. 
+- `native-egl` - enable egl API even for x11 builds, if you plan to use `egl` contexts with x11 windows. Most users should ignore this.
 
 #### Miscellaneous
 * `osmesa` - I have no idea. Ignore this unless you know what you are doing.
@@ -59,7 +59,7 @@ When `bindgen` feature is turned on, we generate bindings with bindgen during bu
 This is a fallback, when pre-generated bindings have any mistakes in them (eg: wrong types or missing functions). But this may add significant compile-time overhead.
 
 These features will influence the bindings generated.
-* `native_handles`, `native_egl`, `native_gl` - This generates bindings by including system headers for specific types (eg: `HWND` from `windows.h`) and may bloat compile times *a lot* (25+ seconds on windows) due to inclusion of **huge** platform-specific headers.
+* `native-handles`, `native-egl`, `native-gl` - This generates bindings by including system headers for specific types (eg: `HWND` from `windows.h`) and may bloat compile times *a lot* (25+ seconds on windows) due to inclusion of **huge** platform-specific headers.
 * `vulkan` - includes vulkan header for vk related types (eg: `vkInstance`).
 
 ### Release Check List

@@ -15,19 +15,19 @@ links = "glfw"
 
 [features]
 default = ["all"]
-all = ["x11", "wayland", "native_handles", "native_gl", "native_egl", "vulkan"]
+all = ["x11", "wayland", "native-handles", "native-gl", "native-egl", "vulkan"]
 bindgen = ["dep:bindgen"]
 # build from source, instead of using prebuilt libraries.
-src_build = ["dep:cmake"]
-prebuilt_libs = []
+src-build = ["dep:cmake"]
+prebuilt-libs = []
 
-static_link = [] # static link (if on linux, src_build must also be enabled)
+static-link = [] # static link (if on linux, src-build must also be enabled)
 vulkan = []
 wayland = []
 x11 = []
-native_handles = []
-native_gl = []
-native_egl = [] 
+native-handles = []
+native-gl = []
+native-egl = [] 
 osmesa = [] 
 
 

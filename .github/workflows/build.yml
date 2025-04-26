@@ -34,22 +34,22 @@ jobs:
 
       - name: Source build with static link
         shell: bash
-        run: cargo clean && cargo run -vv --example=version --features=src_build,static_link
+        run: cargo clean && cargo run -vv --example=version --features=src-build,static-link
       
       - name: Source build with shared link
         shell: bash
-        run: cargo clean && cargo run -vv --example=version --features=src_build
+        run: cargo clean && cargo run -vv --example=version --features=src-build
 
       - name: Prebuilt libs with static link (Non-Linux)
         shell: bash
-        # linux pre-built static libs are not provided, so, static linkign requires src_build.
+        # linux pre-built static libs are not provided, so, static linkign requires src-build.
         if: matrix.os != 'ubuntu'
-        run: cargo clean && cargo run -vv --example=version --features=static_link,prebuilt_libs
+        run: cargo clean && cargo run -vv --example=version --features=static-link,prebuilt-libs
       
       - name: Prebuilt libs with shared link
         shell: bash
         if: matrix.os != 'ubuntu'
-        run: cargo clean && cargo run -vv --example=version --features=prebuilt_libs
+        run: cargo clean && cargo run -vv --example=version --features=prebuilt-libs
             
       - name: Install Glfw Packages (MacOs)
         if: matrix.os == 'macos'
@@ -59,7 +59,7 @@ jobs:
       - name: PkgConfig build with static linking (MacOs)
         if: matrix.os == 'macos'
         shell: bash
-        run: cargo clean && cargo run -vv --example=version --features=static_link
+        run: cargo clean && cargo run -vv --example=version --features=static-link
       
 
       - name: PkgConfig build with shared linking (MacOs)
@@ -88,7 +88,7 @@ jobs:
         shell: bash
         env:
           PKG_CONFIG_PATH: ${{github.workspace}}/build_static/lib/pkgconfig
-        run: cargo clean && cargo run -vv --example=version --features=static_link
+        run: cargo clean && cargo run -vv --example=version --features=static-link
         
       - name: PkgConfig build with shared linking (Linux)
         if: matrix.os == 'ubuntu'
@@ -99,10 +99,10 @@ jobs:
         run: cargo clean && cargo run -vv --example=version
     
       # We don't pass --no-default-features, so, this generates bindings for 
-      # vulkan and native_gl/egl + other handles too by including system headers.
+      # vulkan and native-gl/egl + other handles too by including system headers.
       - name: Generate Bindings
         shell: bash
-        run: cargo clean && cargo run -vv --example=version --features=bindgen,src_build
+        run: cargo clean && cargo run -vv --example=version --features=bindgen,src-build
       
       # Just to make sure that the script works on all platforms.
       - name: Check gen_bindings.sh script
