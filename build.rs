@@ -98,10 +98,17 @@ fn main() {
         }
         TargetOs::Linux | TargetOs::Others => {
             if features.x11 {
-                println!("cargo:rustc-link-lib=X11");
+                println!(
+                    "pkg-config x11 lib: {:#?}",
+                    pkg_config::probe_library("x11").expect("pkg-config failed to find x11")
+                );
             }
             if features.wayland {
-                println!("cargo:rustc-link-lib=wayland-client");
+                println!(
+                    "pkg-config wayland-client lib: {:#?}",
+                    pkg_config::probe_library("wayland-client")
+                        .expect("pkg-config failed to find wayland-client")
+                );
             }
         }
         _ => {}
