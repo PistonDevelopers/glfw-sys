@@ -20,11 +20,8 @@ fi
 # GLFW_INCLUDE_VULKAN to vulkan convenience functions. requires vulkan headers.
 CLANG_ARGS="-DGLFW_INCLUDE_VULKAN -DGLFW_INCLUDE_NONE"
 
-# on windows/mac, append vulkan sdk include path to provide vulkan header location
-case "$OSTYPE" in
-  msys*|cygwin*|darwin*)  CLANG_ARGS="$CLANG_ARGS -I${VULKAN_SDK}/include" ;;
-  *)         ;;
-esac
+# append vulkan include path, if VULKAN_SDK is set. ${VAR_IF_EXISTS:+EXPAND_TO_THIS}
+CLANG_ARGS="$CLANG_ARGS ${VULKAN_SDK:+-I${VULKAN_SDK}/include}"
 
 # irrelevant because we don't pre-generate bindings for glfw3native.h
 # https://github.com/rust-lang/rust-bindgen/issues/1226#issuecomment-565029052
