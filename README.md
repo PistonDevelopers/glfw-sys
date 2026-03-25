@@ -10,7 +10,7 @@ This library has two main purposes:
 
 For normal applications, you only need to care about 2 features:
 1. `src-build` - if you want to build from source. adds around 10 seconds of build time. It will also build from source if pkg-config fails (regardless of this feature).
-2. `static-link` - if you want to link statically. On linux, this requires `src-build` too, so prefer dynamic linking during development for faster compile times. 
+2. `dynamic-link` - if you want to link dynamically to GLFW. Dynamic linking can provide faster compile times during development.
 
 ### Features
 
@@ -18,15 +18,15 @@ For normal applications, you only need to care about 2 features:
 
 > NOTE: For emscripten, none of these features apply. We just pass the necessary flags like `-sUSE_GLFW=3` to linker and simply let emscripten take care of things.
 
-- `static-link` - statically link glfw. If disabled, we will dynamically link glfw.
+- `dynamic-link` - dynamically link glfw (creates runtime dependency). If disabled, we will statically link glfw
 
 We try to build glfw in this order:
-- `src-build` - If enabled, build glfw from source (sources are included with crate). Ensure `cmake` is installed and any other required dependencies.
+- `src-build` - If enabled, build glfw from source (sources are included with crate). Ensure `cmake` is installed and any other required dependencies. **This takes priority over `prebuilt-libs` if both are enabled.**
 - `prebuilt-libs` (only for windows/macos. ignored on other platforms) - If enabled, we download and link pre-built glfw libs from <https://github.com/glfw/glfw/releases/>.
 
 > NOTE: We use curl + tar (unzip on macos) to download and extract pre-built libs. mac/win10+ will have these by default.
 
-Finally, if neither `src-build` nor `prebuilt-libs` feature is enabled, we will try to use `pkg-config` to find and link to system glfw libs.
+Finally, if neither `src-build` nor `prebuilt-libs` feature is enabled, we will try to use `pkg-config` to find and link to system glfw libs. By default, this will attempt static linking unless the `dynamic-link` feature is enabled.
 
 #### Platform Backends (non-mac and non-windows only)
 * `x11` and `wayland` - enables support for x11/wayland. Enable both and you can choose which one to use during initialization. `x11/wayland` are ignored on windows/macos platforms.
@@ -39,7 +39,7 @@ Finally, if neither `src-build` nor `prebuilt-libs` feature is enabled, we will 
 These features expose native "HWND"/"NSWindow"/"X11Connection" etc.. handles.
 Unless you are using `wgpu`-like libs that need raw-window-handles, these features can be ignored.
 - `native-handles` - enable APIs to get platform specific window handles or display connections or monitor ids. useful for raw-window-handle support.
-- `native-gl` - enable APIs for getting platform specific gl contexts (`wgl`, `egl`, `glx`, `nsgl` etc..). Most users should ignore this. 
+- `native-gl` - enable APIs for getting platform specific gl contexts (`wgl`, `egl`, `glx`, `nsgl` etc..). Most users should ignore this.
 - `native-egl` - enable egl API even for x11 builds, if you plan to use `egl` contexts with x11 windows. Most users should ignore this.
 
 #### Miscellaneous
@@ -63,7 +63,7 @@ These features will influence the bindings generated.
 * `vulkan` - includes vulkan header for vk related types (eg: `vkInstance`).
 
 ### Release Check List
-* When updating glfw version, make sure to checkout the submodule and commit it. 
+* When updating glfw version, make sure to checkout the submodule and commit it.
 * When updating glfw version, don't forget to change the url link in build.rs to download the pre-built libs of the correct version.
 * When updating glfw version, don't forget to update the pkg-config `atleast_version` argument.
 * Check that the bindings generated are the same on all platforms by checking the CI logs for the `gen_bindings.sh` step.

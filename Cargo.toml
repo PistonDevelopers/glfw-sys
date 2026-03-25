@@ -21,14 +21,14 @@ bindgen = ["dep:bindgen"]
 src-build = []
 prebuilt-libs = []
 
-static-link = [] # static link (if on linux, src-build must also be enabled)
+dynamic-link = [] # explicitly opt into dynamic linking
 vulkan = []
 wayland = []
 x11 = []
 native-handles = []
 native-gl = []
-native-egl = [] 
-osmesa = [] 
+native-egl = []
+osmesa = []
 
 
 [dependencies]

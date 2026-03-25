@@ -36,18 +36,16 @@ fn main() {
     }
 
     let pkgconfig_build;
-    if features.prebuilt_libs {  // prebuilt libs.
-        pkgconfig_build = false;
-        download_libs(features, &out_dir);
-    }
-    else if features.src_build {  // build from source.
+    if features.src_build {
         pkgconfig_build = false;
         build_from_src(features, &out_dir);
-    }
-    else {  // try to use pkg-config first and build from source on failure.
+    } else if features.prebuilt_libs {
+        pkgconfig_build = false;
+        download_libs(features, &out_dir);
+    } else {  // try to use pkg-config first and build from source on failure.
         // emits linker flags by default.
         match pkg_config::Config::new()
-            .statik(features.static_link)
+            .statik(!features.dynamic_link)
             .atleast_version("3.4.0")
             .probe("glfw3")
         {
@@ -67,13 +65,13 @@ fn main() {
     // pkg-config takes care of emitting linker flags, so we only explicitly
     // need to emit them if we aren't using pkg-config.
     if !pkgconfig_build {
-        if features.static_link {
-            println!("cargo:rustc-link-lib=static=glfw3");
-        } else {
+        if features.dynamic_link {
             match features.os {
                 TargetOs::Win => println!("cargo:rustc-link-lib=dylib=glfw3dll"),
                 _ => println!("cargo:rustc-link-lib=dylib=glfw"),
             }
+        } else {
+            println!("cargo:rustc-link-lib=static=glfw3");
         }
     }
 
@@ -140,8 +138,8 @@ enum TargetOs {
 #[allow(unused)]
 #[derive(Clone, Copy)]
 struct Features {
-    /// Link statically. On Linux, this requires `src-build` to be enabled.
-    static_link: bool,
+    /// Link dynamically (default is static)
+    dynamic_link: bool,
     /// Enable X11 support
     x11: bool,
     /// Enable wayland support
@@ -193,7 +191,7 @@ impl Default for Features {
         // on emscripten, we ignore everything.
         if os == TargetOs::Emscripten {
             return Self {
-                static_link: false,
+                dynamic_link: false,
                 vulkan: false,
                 native: false,
                 os,
@@ -211,7 +209,7 @@ impl Default for Features {
         // on docs-rs builds, skip vulkan on non-linux platforms, as they lack VULKAN_SDK headers
         let skip_vulkan = docs_rs && os != TargetOs::Linux;
         Self {
-            static_link: cfg!(feature = "static-link"),
+            dynamic_link: cfg!(feature = "dynamic-link"),
 
             vulkan: cfg!(feature = "vulkan") && !skip_vulkan,
 
@@ -226,8 +224,10 @@ impl Default for Features {
             gl: cfg!(feature = "native-gl"),
             src_build: cfg!(feature = "src-build"),
             // this feature only works on windows and mac
+            // Don't enable prebuilt_libs if src_build is explicitly requested
             prebuilt_libs: cfg!(feature = "prebuilt-libs")
-                && (os == TargetOs::Win || os == TargetOs::Mac),
+                && (os == TargetOs::Win || os == TargetOs::Mac)
+                && !cfg!(feature = "src-build"),
         }
     }
 }
@@ -257,17 +257,19 @@ fn build_from_src(features: Features, _out_dir: &str) {
             config.define("GLFW_BUILD_X11", "OFF");
         }
     }
-    if features.static_link {
-        config.define("GLFW_LIBRARY_TYPE", "STATIC");
-    } else {
+
+    if features.dynamic_link {
         config.define("GLFW_LIBRARY_TYPE", "SHARED");
+    } else {
+        config.define("GLFW_LIBRARY_TYPE", "STATIC");
     }
+
     let dst_dir = config.build();
     println!(
         "cargo:rustc-link-search=native={}",
         dst_dir.join("lib").display()
     );
-    if !features.static_link && features.os == TargetOs::Win {
+    if features.dynamic_link && features.os == TargetOs::Win {
         println!(
             "cargo:rustc-link-search=native={}",
             dst_dir.join("bin").display()
@@ -450,10 +452,18 @@ fn download_libs(features: Features, out_dir: &str) {
     println!("cargo:THIRD_PARTY={}", lib_dir.display());
     match features.os {
         TargetOs::Win => {
-            println!(
-                "cargo:rustc-link-search=native={}",
-                lib_dir.join("lib-vc2022").display()
-            );
+            // Default to mingw libs for gnu targets and vc2022 for msvc
+            if std::env::var("CARGO_CFG_TARGET_ENV").unwrap() == "gnu" {
+                println!(
+                    "cargo:rustc-link-search=native={}",
+                    lib_dir.join("lib-mingw-w64").display()
+                );
+            } else {
+                println!(
+                    "cargo:rustc-link-search=native={}",
+                    lib_dir.join("lib-vc2022").display()
+                );
+            }
         }
         TargetOs::Mac => {
             let lib_dir = lib_dir.join("lib-universal");
