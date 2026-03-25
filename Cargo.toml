@@ -1,6 +1,6 @@
 [package]
 name = "glfw-sys"
-version = "7.0.0"
+version = "8.0.0"
 authors = ["Camilla Berglund <elmindreda@elmindreda.org>"]
 description = "An Open Source, multi-platform library for creating windows with OpenGL contexts and receiving input and events"
 documentation = "http://www.glfw.org/documentation.html"
